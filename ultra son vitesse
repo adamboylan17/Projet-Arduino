@@ -1,0 +1,103 @@
+#include<LiquidCrystal.h>
+
+#define Broche_Echo 7 // Broche Echo du HC-SR04 sur D7 //
+#define Broche_Trigger 8 // Broche Trigger du HC-SR04 sur D8 //
+
+LiquidCrystal lcd(2, 3, 4, 9, 10, 11);
+
+
+// Definition des variables
+int MesureMaxi = 300; // Distance maxi a mesurer //
+int MesureMini = 3; // Distance mini a mesurer //
+
+boolean bobo = true;
+long Duree;
+long Distance;
+int distanceCm()
+{
+  // Debut de la mesure avec un signal de 10 µS applique sur TRIG //
+  digitalWrite(Broche_Trigger, LOW); // On efface l'etat logique de TRIG //
+  delayMicroseconds(2);
+
+  digitalWrite(Broche_Trigger, HIGH); // On met la broche TRIG a "1" pendant 10µS //
+  delayMicroseconds(10);
+  digitalWrite(Broche_Trigger, LOW); // On remet la broche TRIG a "0" //
+  // On mesure combien de temps le niveau logique haut est actif sur ECHO //
+
+  const float DureeMicro = pulseIn(Broche_Echo, HIGH);
+
+  Serial.print("La durée est de :");
+  Serial.print(" ");
+  Serial.print(DureeMicro);
+  Serial.println("µs");
+  Serial.println(" ");
+
+  // Calcul de la distance grace au temps mesure //
+
+  const float DistanceCm = DureeMicro * 0.034 / 2.0; //  (Durée totale (aller-retour))
+
+  // Verification si valeur mesuree dans la plage //
+
+  if (Distance >= MesureMaxi || Distance <= MesureMini) {
+    // Si la distance est hors plage, on affiche un message d'erreur //
+    Serial.println("Distance de mesure en dehors de la plage (3 cm à 3 m)");
+  }
+  else {
+    // Affichage dans le moniteur serie de la distance mesuree //
+    Serial.print("Distance mesuree :");
+    Serial.print(DistanceCm);
+    Serial.println("cm");
+    Serial.println(" ");
+  }
+
+  return DistanceCm;
+
+
+}
+
+
+
+
+
+void setup()
+{
+  pinMode(Broche_Trigger, OUTPUT); // Broche Trigger en sortie //
+  pinMode(Broche_Echo, INPUT); // Broche Echo en entree //
+  lcd.begin(16, 2);
+  Serial.begin (115200);
+}
+
+
+void loop() {
+
+  float distCm1 = distanceCm();
+  float deltaT = 500; //temps avant prochaine mesure
+  delay(deltaT);
+  float distCm2 = distanceCm();
+  float deltaD = distCm1 - distCm2;
+
+  float vitesseS = deltaD / deltaT * 10;
+  float vitesse = vitesseS * 3.6;
+
+ 
+
+  lcd.setCursor(0, 0);
+  lcd.print("Speed : ");
+  lcd.print(vitesseS,2);
+  lcd.print("km/h");
+
+  Serial.println("la vitesse est ");
+  Serial.print(vitesse,4);
+  Serial.println(" m/s");
+  Serial.print(vitesseS);
+  Serial.println("km/h");
+  Serial.println(" ");
+
+
+
+
+
+
+  //delay(1000); // On ajoute 1 seconde de delais entre chaque mesure //
+
+}
